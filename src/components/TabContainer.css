@@ -1,0 +1,121 @@
+.tab-container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  background: white;
+}
+
+.tab-header {
+  display: flex;
+  background: white;
+  border-radius: 0;
+  overflow: hidden;
+  margin-bottom: 0;
+  border: none;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.tab-button {
+  flex: 1;
+  background: #f8f9fa;
+  border: none;
+  padding: 20px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-bottom: 3px solid transparent;
+  min-height: 85px;
+  position: relative;
+}
+
+.tab-button:hover {
+  background: #e9ecef;
+  color: #333;
+  transform: translateY(-2px);
+}
+
+.tab-button.active {
+  background: white;
+  color: #333;
+  border-bottom-color: #667eea;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.tab-button:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 20%;
+  height: 60%;
+  width: 1px;
+  background: #e9ecef;
+}
+
+.tab-icon {
+  font-size: 22px;
+  transition: transform 0.3s ease;
+}
+
+.tab-button:hover .tab-icon {
+  transform: scale(1.1);
+}
+
+.tab-button.active .tab-icon {
+  transform: scale(1.05);
+}
+
+.tab-content {
+  border-radius: 0;
+  overflow: hidden;
+  border: none;
+  border-top: none;
+  background: white;
+}
+
+/* 响应式设计 */
+@media (max-width: 600px) {
+  .tab-container {
+    margin: 10px;
+    border-radius: 15px;
+  }
+  
+  .tab-button {
+    padding: 15px 10px;
+    font-size: 13px;
+    min-height: 75px;
+    gap: 8px;
+  }
+  
+  .tab-icon {
+    font-size: 18px;
+  }
+  
+  .tab-button:not(:last-child)::after {
+    top: 15%;
+    height: 70%;
+  }
+}
+
+/* 超小屏幕优化 */
+@media (max-width: 480px) {
+  .tab-button {
+    font-size: 12px;
+    padding: 12px 8px;
+    min-height: 70px;
+    gap: 6px;
+  }
+  
+  .tab-icon {
+    font-size: 16px;
+  }
+}
