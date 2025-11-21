@@ -1,0 +1,104 @@
+.excel-importer{
+  padding: 16px;
+  max-width: 900px;
+}
+.form-row{
+  margin-bottom: 12px;
+  display:flex;
+  flex-direction:column;
+}
+.form-row label{
+  font-weight:600;
+  margin-bottom:6px;
+}
+.container {
+  max-width: 800px;
+  width: 100%;
+  background: white;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.input-section {
+  padding: 24px 30px;
+  border-bottom: 1px solid #eee;
+}
+
+.input-section label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #333;
+  font-size: 16px;
+}
+
+.input-section input[type="file"],
+.input-section input[type="text"],
+.input-section input[type="date"],
+.input-section input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e1e5e9;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+}
+
+.input-section input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.04);
+}
+
+.download-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.18);
+  margin-left: 12px;
+}
+
+.download-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.28);
+}
+
+.msg-list { padding: 8px 0 0 0 }
+.msg { color: #666; font-size: 14px; margin-bottom: 6px }
+.small{ font-size:12px; color:#666; margin-top:6px }
+.notes{ margin-top:12px }
+
+@media (max-width: 600px) {
+  .container { margin: 10px; border-radius: 15px }
+  .input-section { padding: 18px }
+  .download-btn { width: 100% }
+}
+.form-row input[type="text"], .form-row input[type="datetime-local"], .form-row input{
+  padding:8px;
+  border-radius:4px;
+  border:1px solid #ddd;
+  max-width:400px;
+}
+.actions{ margin-top:12px }
+.actions button{
+  padding:8px 14px;
+  border-radius:6px;
+  border: none;
+  background:#2f80ed;
+  color:white;
+  cursor:pointer;
+}
+.preview{ margin-top:16px; background:#f8f8f8; padding:12px; border-radius:6px }
+.messages{ margin-top:12px }
+.msg{ color:#333; margin-bottom:6px }
+.small{ font-size:12px; color:#666; margin-top:6px }
+.notes{ margin-top:12px }

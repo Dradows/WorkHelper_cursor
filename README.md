@@ -1,4 +1,4 @@
-# 实时二维码生成器 (Vite + React)
+# 工具箱(Vite + React)
 
 一个使用现代前端技术栈构建的实时二维码生成器，基于Vite和React实现。
 
@@ -22,25 +22,30 @@
 ## 🛠️ 开发环境
 
 ### 系统要求
+
 - Node.js 16.0 或更高版本
 - npm 或 yarn 包管理器
 
 ### 安装依赖
+
 ```bash
 npm install
 ```
 
 ### 启动开发服务器
+
 ```bash
 npm run dev
 ```
 
 ### 构建生产版本
+
 ```bash
 npm run build
 ```
 
 ### 预览生产版本
+
 ```bash
 npm run preview
 ```
@@ -69,7 +74,9 @@ workHelper/
 ## 🎯 核心组件
 
 ### QRCodeGenerator
+
 主要的二维码生成组件，包含：
+
 - 文本输入处理
 - 防抖优化
 - 加载状态管理
@@ -77,7 +84,9 @@ workHelper/
 - 下载功能
 
 ### qrCodeUtils
+
 二维码生成工具函数，支持：
+
 - PNG格式 (Data URL)
 - Canvas元素
 - SVG字符串
@@ -85,14 +94,18 @@ workHelper/
 ## 🔧 自定义配置
 
 ### 二维码选项
+
 可以在 `src/utils/qrCodeUtils.js` 中修改：
+
 - 尺寸大小
 - 边距设置
 - 颜色配置
 - 错误纠正级别
 
 ### 样式定制
+
 所有样式都在对应的CSS文件中，支持：
+
 - 主题色彩
 - 布局调整
 - 响应式断点
@@ -137,5 +150,6 @@ MIT License - 可自由使用和修改
 ## 📞 支持
 
 如有问题或建议，请通过以下方式联系：
+
 - 提交 GitHub Issue
 - 发送邮件至项目维护者

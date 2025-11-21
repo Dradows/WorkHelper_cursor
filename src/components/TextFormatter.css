@@ -50,7 +50,23 @@
 
 .input-controls {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+}
+
+.surround-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.surround-input input {
+  width: 140px;
+  padding: 8px 10px;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
 .clear-btn {
