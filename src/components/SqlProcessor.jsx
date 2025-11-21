@@ -185,6 +185,35 @@ const SqlProcessor = () => {
     // track whether create-for-ptemp already added for a type1 or type2 (we add only for type1 before first DML per table)
     const createdPtemp = new Set()
 
+    // helper: insert drop/create for a table; ensure insertion is placed before any existing TRUNCATE for that table in `out`
+    const insertCreateDropBeforeTruncate = (key, likeRef) => {
+      if (createdPtemp.has(key)) return
+      const dropStmt = `drop table if exists ptemp.${key}`
+      const createStmt = `create table ptemp.${key} like ${likeRef}`
+      // find first truncate statement in out that targets this table
+      let insertIdx = -1
+      for (let j = 0; j < out.length; j++) {
+        const s = out[j]
+        if (!s) continue
+        if (/^truncate\s+table/i.test(s.trim())) {
+          try {
+            const identJ = extractTargetTable(s, 'truncate')
+            const partsJ = splitSchemaTable(identJ)
+            if (partsJ.table === key) { insertIdx = j; break }
+          } catch (e) {
+            // ignore parse errors, continue searching
+          }
+        }
+      }
+      if (insertIdx === -1) {
+        out.push(dropStmt)
+        out.push(createStmt)
+      } else {
+        out.splice(insertIdx, 0, dropStmt, createStmt)
+      }
+      createdPtemp.add(key)
+    }
+
     for (let i = 0; i < stmts.length; i++) {
       const s = stmts[i]
       const t = s.trim()
@@ -211,20 +240,24 @@ const SqlProcessor = () => {
             // determine original schema
             const originalSchema = parts.schema || (tblMap.get(key) && Array.from(tblMap.get(key).schemas)[0]) || ''
             const likeRef = originalSchema ? `${originalSchema}.${key}` : key
-            out.push(`drop table if exists ptemp.${key}`)
-            out.push(`create table ptemp.${key} like ${likeRef}`)
-            createdPtemp.add(key)
+            insertCreateDropBeforeTruncate(key, likeRef)
           }
           // replace target table occurrence after insert into with ptemp.table
-              let newStmt = t.replace(/(insert\s+into\s+)([^\s(]+)/i, `$1ptemp.${key}`)
-              // also replace FROM/JOIN inside this statement
+              let newStmt = t.replace(/(insert\s+into\s+)([^\s(]+)/i, (m, pfx, orig) => {
+                const origToken = orig
+                const originalTableToken = origToken.includes('.') ? origToken.split('.').pop() : origToken
+                return `${pfx}ptemp.${originalTableToken}`
+              })
+              // also replace FROM/JOIN inside this statement (preserve ${} in table token)
               const regexRefInner = /(\b(?:from|join)\b\s*)([^\s,()]+)/ig
               newStmt = newStmt.replace(regexRefInner, (full, prefix, ident) => {
-                const norm2 = normalizeIdentifier(ident)
-                const parts2 = splitSchemaTable(norm2)
-                const tbl2 = parts2.table
+                const tokenMatch = ident.trim().match(/^([^\s,()]+)/)
+                if (!tokenMatch) return full
+                const origToken = tokenMatch[1]
+                const originalTableToken = origToken.includes('.') ? origToken.split('.').pop() : origToken
+                const tbl2 = normalizeIdentifier(originalTableToken).toLowerCase()
                 if (classMap.history.includes(tbl2) || classMap.readonly.includes(tbl2)) return full
-                if (classMap.type1.includes(tbl2) || classMap.type2.includes(tbl2)) return `${prefix}ptemp.${tbl2}`
+                if (classMap.type1.includes(tbl2) || classMap.type2.includes(tbl2)) return `${prefix}ptemp.${originalTableToken}`
                 return full
               })
               out.push(newStmt)
@@ -243,19 +276,19 @@ const SqlProcessor = () => {
           if (classMap.type1.includes(key) && !createdPtemp.has(key)) {
             const originalSchema = parts.schema || (tblMap.get(key) && Array.from(tblMap.get(key).schemas)[0]) || ''
             const likeRef = originalSchema ? `${originalSchema}.${key}` : key
-            out.push(`drop table if exists ptemp.${key}`)
-            out.push(`create table ptemp.${key} like ${likeRef}`)
-            createdPtemp.add(key)
+            insertCreateDropBeforeTruncate(key, likeRef)
           }
           let newStmt = t.replace(/(delete\s+from\s+)([^\s;]+)/i, `$1ptemp.${key}`)
           // replace FROM/JOIN in any subqueries inside delete (best-effort)
           const regexRefInnerDel = /(\b(?:from|join)\b\s*)([^\s,()]+)/ig
           newStmt = newStmt.replace(regexRefInnerDel, (full, prefix, ident) => {
-            const norm2 = normalizeIdentifier(ident)
-            const parts2 = splitSchemaTable(norm2)
-            const tbl2 = parts2.table
+            const tokenMatch = ident.trim().match(/^([^\s,()]+)/)
+            if (!tokenMatch) return full
+            const origToken = tokenMatch[1]
+            const originalTableToken = origToken.includes('.') ? origToken.split('.').pop() : origToken
+            const tbl2 = normalizeIdentifier(originalTableToken).toLowerCase()
             if (classMap.history.includes(tbl2) || classMap.readonly.includes(tbl2)) return full
-            if (classMap.type1.includes(tbl2) || classMap.type2.includes(tbl2)) return `${prefix}ptemp.${tbl2}`
+            if (classMap.type1.includes(tbl2) || classMap.type2.includes(tbl2)) return `${prefix}ptemp.${originalTableToken}`
             return full
           })
           out.push(newStmt)
@@ -272,11 +305,9 @@ const SqlProcessor = () => {
           handled = true
         } else if (classMap.type1.includes(key) || classMap.type2.includes(key)) {
           if (classMap.type1.includes(key) && !createdPtemp.has(key)) {
-            const originalSchema = parts.schema || (tblMap.get(key) && Array.from(tblMap.get(key).schemas)[0]) || ''
-            const likeRef = originalSchema ? `${originalSchema}.${key}` : key
-            out.push(`drop table if exists ptemp.${key}`)
-            out.push(`create table ptemp.${key} like ${likeRef}`)
-            createdPtemp.add(key)
+              const originalSchema = parts.schema || (tblMap.get(key) && Array.from(tblMap.get(key).schemas)[0]) || ''
+              const likeRef = originalSchema ? `${originalSchema}.${key}` : key
+              insertCreateDropBeforeTruncate(key, likeRef)
           }
           let newStmt = t.replace(/(truncate\s+table\s+)([^\s;]+)/i, `$1ptemp.${key}`)
           out.push(newStmt)
@@ -293,14 +324,16 @@ const SqlProcessor = () => {
           const regexRef = /(\b(?:from|join)\b\s*)([\s\S]*?)(?=(\s+as\s+|\s+\w+\s|\s*,|\s+where\b|\s+join\b|\s+on\b|\s*\(|$))/ig
           newStmt = t.replace(regexRef, (full, prefix, ident) => {
             const trimmedIdent = ident.trim()
-            const norm = normalizeIdentifier(trimmedIdent)
-            const parts = splitSchemaTable(norm)
-            const tbl = parts.table
+            // extract the first token (schema.table or table)
+            const tokenMatch = trimmedIdent.match(/^([^\s,()]+)/)
+            if (!tokenMatch) return full
+            const originalToken = tokenMatch[1]
+            const originalTableToken = originalToken.includes('.') ? originalToken.split('.').pop() : originalToken
+            const tblLower = normalizeIdentifier(originalTableToken).toLowerCase()
             // do not modify history or readonly tables
-            if (classMap.history.includes(tbl) || classMap.readonly.includes(tbl)) return full
-            if (classMap.type1.includes(tbl) || classMap.type2.includes(tbl)) {
-              // preserve spacing after prefix and any alias will remain after the matched group
-              return `${prefix}ptemp.${tbl}`
+            if (classMap.history.includes(tblLower) || classMap.readonly.includes(tblLower)) return full
+            if (classMap.type1.includes(tblLower) || classMap.type2.includes(tblLower)) {
+              return `${prefix}ptemp.${originalTableToken}`
             }
             return full
           })
@@ -315,26 +348,67 @@ const SqlProcessor = () => {
       const sTrim = s.trim()
       const createMatch = sTrim.match(/^create\s+table\s+(?:if\s+not\s+exists\s+)?/i)
       if (createMatch) {
-        const rawIdent = extractTargetTable(sTrim, 'create')
-        const parts = splitSchemaTable(rawIdent)
-        const key = parts.table
-        if (classMap.type1.includes(key) || classMap.type2.includes(key)) {
-          // find position of '(' to replace the identifier between create ... and (
-          const idx = s.search(/\(/)
-          if (idx !== -1) {
-            // find prefix end index where table identifier starts
-            const prefixMatch = s.match(/(create\s+table\s+(?:if\s+not\s+exists\s+)?)/i)
-            const prefixLen = prefixMatch ? prefixMatch[0].length : 0
-            const before = s.substring(0, prefixLen)
-            const after = s.substring(idx)
-            return `${before}ptemp.${key}${after}`
+        // capture the raw identifier text between CREATE ... and first '('
+        const rawMatch = s.match(/^(\s*create\s+table\s+(?:if\s+not\s+exists\s+)?)([^\(\s]+)/i)
+        if (rawMatch && rawMatch[2]) {
+          const rawIdentFull = rawMatch[2]
+          const parts = splitSchemaTable(normalizeIdentifier(rawIdentFull))
+          const key = parts.table
+          if (classMap.type1.includes(key) || classMap.type2.includes(key)) {
+            const originalTableToken = rawIdentFull.includes('.') ? rawIdentFull.split('.').pop() : rawIdentFull
+            // always use plain 'ptemp' for schema replacement (do not keep ${})
+            const schemaRep = 'ptemp'
+            const prefix = rawMatch[1]
+            const after = s.substring(rawMatch[0].length - rawIdentFull.length + rawMatch[0].length) // fallback
+            // safer: find index of '(' and use substring
+            const idx = s.search(/\(/)
+            const trailing = idx !== -1 ? s.substring(idx) : ''
+            return `${prefix}${schemaRep}.${originalTableToken}${trailing}`
           }
         }
       }
       return s
     })
 
-    const resultSql = finalOut.join(';\n') + (finalOut.length ? ';' : '')
+    // perform global whole-word replacement for modification tables (type1 + type2)
+    const modTables = [...classMap.type1, ...classMap.type2]
+    const replaceTableGlobally = (stmt, key) => {
+      if (!key) return stmt
+      // first replace schema.table occurrences, preserving any ${} wrappers in schema/table
+      stmt = stmt.replace(/([\w\$\{\}`"'\-]+)\.([\w\$\{\}`"'\-]+)/g, (m, a, b) => {
+        try {
+          if (normalizeIdentifier(b).toLowerCase() === key) {
+            // preserve table original (b) including ${...}
+            const originalTable = b
+            // always use plain ptemp for schema
+            const schemaRep = 'ptemp'
+            return `${schemaRep}.${originalTable}`
+          }
+        } catch (e) {}
+        return m
+      })
+      // then replace bare occurrences (whole-token match), keep original token's ${} if any
+      stmt = stmt.replace(/(?<![\w\$\{\}`"'\.])([\w\$\{\}`"'\-]+)(?![\w\$\{\}`"'\.])/g, (m) => {
+        try {
+          if (normalizeIdentifier(m).toLowerCase() === key) {
+            // preserve original token m (which may contain ${...} parts)
+            return `ptemp.${m}`
+          }
+        } catch (e) {}
+        return m
+      })
+      return stmt
+    }
+
+    const replacedOut = finalOut.map(s => {
+      let cur = s
+      modTables.forEach(key => {
+        cur = replaceTableGlobally(cur, key)
+      })
+      return cur
+    })
+
+    const resultSql = replacedOut.join(';\n') + (replacedOut.length ? ';' : '')
     setProcessedSql(resultSql)
     setMessages(prev => [...prev, '处理完成，可下载结果。'])
   }
