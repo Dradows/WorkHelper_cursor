@@ -32,6 +32,12 @@ const tabFeatures = [
     description: '从 Excel 定义生成 DDL 与 INIT 脚本。',
     tab: 'excel',
   },
+  {
+    name: 'SQL 处理器',
+    icon: '🛠️',
+    description: '导入 SQL 文件并根据规则分类、替换和输出处理后的 SQL。',
+    tab: 'sqlproc',
+  },
 ];
 
 const Home = ({ setActiveTab }) => (

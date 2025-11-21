@@ -6,12 +6,13 @@ import TimeExtractor from './TimeExtractor';
 import RegexTester from './RegexTester';
 import './TabContainer.css';
 import ExcelImporter from './ExcelImporter';
+import SqlProcessor from './SqlProcessor';
 
 const TabContainer = () => {
   // 根据hash初始化tab
   const getTabFromHash = () => {
     const hash = window.location.hash.replace('#', '');
-    const validTabs = ['home', 'text', 'time', 'regex', 'qr', 'excel'];
+    const validTabs = ['home', 'text', 'time', 'regex', 'qr', 'excel', 'sqlproc'];
     return validTabs.includes(hash) ? hash : 'home';
   };
   const [activeTab, setActiveTab] = useState(getTabFromHash());
@@ -77,6 +78,13 @@ const TabContainer = () => {
           <span className="tab-icon">📥</span>
           导入 Excel 并生成 SQL
         </button>
+        <button
+          className={`tab-button ${activeTab === 'sqlproc' ? 'active' : ''}`}
+          onClick={() => handleTabChange('sqlproc')}
+        >
+          <span className="tab-icon">🛠️</span>
+          SQL 处理器
+        </button>
       </div>
 
       <div className="tab-content">
@@ -86,6 +94,7 @@ const TabContainer = () => {
         {activeTab === 'regex' && <RegexTester />}
         {activeTab === 'qr' && <QRCodeGenerator />}
         {activeTab === 'excel' && <ExcelImporter />}
+        {activeTab === 'sqlproc' && <SqlProcessor />}
       </div>
     </div>
   )
