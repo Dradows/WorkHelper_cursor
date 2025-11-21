@@ -354,7 +354,7 @@ const SqlProcessor = () => {
 
   return (
     <div className="container sql-processor">
-      <h1>SQL 文件处理器</h1>
+      <h1>PTEMP 转化</h1>
       <div className="input-section">
         <label>选择要处理的 SQL 文件：</label>
         <input type="file" accept=".sql" onChange={handleFile} />

@@ -83,7 +83,7 @@ const TabContainer = () => {
           onClick={() => handleTabChange('sqlproc')}
         >
           <span className="tab-icon">🛠️</span>
-          SQL 处理器
+          PTEMP 转化
         </button>
       </div>
 
